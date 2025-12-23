@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import multerStorageCloudinary from "multer-storage-cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
@@ -18,7 +18,7 @@ cloudinary.config({
 /* ======================
    MULTER STORAGE
 ====================== */
-const storage = new multerStorageCloudinary.CloudinaryStorage({
+const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "blog-images",
@@ -31,20 +31,14 @@ const upload = multer({ storage });
 /* ======================
    UPLOAD ROUTE
 ====================== */
-router.post(
-  "/",
-  authMiddleware,
-  upload.single("image"),
-  (req, res) => {
-    try {
-      return res.json({
-        url: req.file.path,
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Upload failed" });
-    }
+router.post("/", authMiddleware, upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No image uploaded" });
   }
-);
+
+  res.json({
+    url: req.file.path, // Cloudinary URL
+  });
+});
 
 export default router;
