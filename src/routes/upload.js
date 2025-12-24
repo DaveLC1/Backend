@@ -7,12 +7,12 @@ import authMiddleware from "../middleware/auth.js";
 const router = express.Router();
 
 /* ======================
-   CLOUDINARY CONFIG
+   HARD-CODED CLOUDINARY (TEST ONLY)
 ====================== */
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: "daa49zag2",
+  api_key: "272936612388235",
+  api_secret: "gxAv0TViYSrFBFvc7brxqIkyVJY",
 });
 
 /* ======================
@@ -31,10 +31,22 @@ const upload = multer({ storage });
 /* ======================
    UPLOAD ROUTE
 ====================== */
-router.post("/", authMiddleware, upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No image uploaded" });
+router.post(
+  "/",
+  authMiddleware,
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    return res.json({
+      url: req.file.path, // Cloudinary URL
+    });
   }
+);
+
+export default router;  }
 
   res.json({
     url: req.file.path, // Cloudinary URL
