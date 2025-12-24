@@ -1,13 +1,12 @@
 import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
 /* ======================
-   HARD-CODED CLOUDINARY (TEST ONLY)
+   CLOUDINARY CONFIG
 ====================== */
 cloudinary.config({
   cloud_name: "daa49zag2",
@@ -16,17 +15,12 @@ cloudinary.config({
 });
 
 /* ======================
-   MULTER STORAGE
+   MULTER (MEMORY STORAGE)
 ====================== */
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "blog-images",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-  },
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
-
-const upload = multer({ storage });
 
 /* ======================
    UPLOAD ROUTE
@@ -35,22 +29,27 @@ router.post(
   "/",
   authMiddleware,
   upload.single("image"),
-  (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No image uploaded" });
-    }
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
 
-    return res.json({
-      url: req.file.path, // Cloudinary URL
-    });
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+        {
+          folder: "blog-images",
+        }
+      );
+
+      return res.json({
+        url: result.secure_url,
+      });
+    } catch (err) {
+      console.error("Cloudinary upload error:", err);
+      return res.status(500).json({ error: "Upload failed" });
+    }
   }
 );
-
-export default router;  }
-
-  res.json({
-    url: req.file.path, // Cloudinary URL
-  });
-});
 
 export default router;
